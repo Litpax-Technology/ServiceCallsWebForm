@@ -247,14 +247,16 @@
   <!-- UPDATE SEARCH SCREEN -->
   <div id="updateSearchScreen" style="display:none">
     <div class="page-title">✏️ Update Enquiry</div>
-    <div class="page-sub">Sr No ya Customer Name se search karo</div>
+    <div class="page-sub">Open enquiries mein se select karo</div>
 
     <div class="search-box">
-      <div class="card-label">Search Enquiry</div>
-      <div class="search-row">
-        <input class="search-input" type="text" id="searchQuery" placeholder="Sr No (e.g. 5) ya Customer Name likho..." onkeypress="if(event.key==='Enter')searchEnquiry()">
-        <button class="btn-search" onclick="searchEnquiry()">🔍 Search</button>
+      <div class="card-label">Open Enquiries — Select to Update</div>
+      <div class="form-group">
+        <select id="openEnquiryDropdown" onchange="selectFromDropdown(this.value)" style="padding:12px 14px;font-size:14px;border:1.5px solid var(--border);border-radius:8px;background:var(--surface2);color:var(--text);font-family:'IBM Plex Sans',sans-serif;width:100%;outline:none;">
+          <option value="">-- Pehle load karo --</option>
+        </select>
       </div>
+      <button class="btn-search" onclick="loadOpenEnquiries()" style="margin-top:10px;width:100%">🔄 Open Enquiries Load Karo</button>
     </div>
     <div id="searchResults"></div>
   </div>
@@ -344,7 +346,7 @@
 <div class="toast" id="toast"></div>
 
 <script>
-  const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwQcdrsaitJ-Id2wAXCPOnwuqVUS4jybkFVq2g9V0EkiuDZzyh1bbTTQHEqPIJMzkrN/exec';
+  const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx4jN7bgmF1Va1bK5D4r3aRcqx8LUn0Dbf8XO0Nt32LIU6KgBlHMDCuCB_8fZzBmNuB/exec';
 
   let nextSrNo = 1;
 
@@ -484,43 +486,51 @@
     }
   }
 
-  // ── SEARCH ──
-  function searchEnquiry() {
-    const q = document.getElementById('searchQuery').value.trim();
-    if (!q) { showToast('⚠️ Search query likho'); return; }
+  // ── LOAD OPEN ENQUIRIES ──
+  let openEnquiriesData = [];
 
-    const resultsEl = document.getElementById('searchResults');
-    resultsEl.innerHTML = '<div class="no-results">🔍 Searching...</div>';
+  function loadOpenEnquiries() {
+    const btn = document.querySelector('#updateSearchScreen .btn-search');
+    btn.textContent = '⏳ Loading...';
+    btn.disabled = true;
 
-    window.handleSearchData = function(result) {
+    window.handleOpenData = function(result) {
+      btn.textContent = '🔄 Open Enquiries Load Karo';
+      btn.disabled = false;
+
       if (!result.ok || !result.rows || result.rows.length === 0) {
-        resultsEl.innerHTML = '<div class="no-results">❌ Koi entry nahi mili — Sr No ya naam check karo</div>';
+        showToast('✅ Koi open enquiry nahi hai!');
+        document.getElementById('openEnquiryDropdown').innerHTML = '<option value="">-- Koi open enquiry nahi --</option>';
         return;
       }
-      resultsEl.innerHTML = result.rows.map(row => `
-        <div class="result-card" onclick="selectEnquiry(${JSON.stringify(row).replace(/"/g,'&quot;')})">
-          <div class="rc-top">
-            <div class="rc-name">${row.customerName}</div>
-            <div class="rc-sr">Sr No. ${row.srNo}</div>
-          </div>
-          <div class="rc-meta">
-            <span class="rc-chip">📅 ${row.date}</span>
-            <span class="rc-chip">📱 ${row.contact}</span>
-            <span class="rc-chip">🏷️ ${row.enquiryAbout}</span>
-            <span class="${row.enquiryClosed === 'Yes' ? 'rc-status-closed' : 'rc-status-open'}">
-              ${row.enquiryClosed === 'Yes' ? '✅ Closed' : '⏳ Open'}
-            </span>
-          </div>
-        </div>`).join('');
+
+      openEnquiriesData = result.rows;
+      const dropdown = document.getElementById('openEnquiryDropdown');
+      dropdown.innerHTML = '<option value="">-- Select Open Enquiry --</option>' +
+        result.rows.map((row, i) =>
+          `<option value="${i}">Sr.${row.srNo} — ${row.customerName} — ${row.enquiryAbout} (${row.date})</option>`
+        ).join('');
+
+      showToast('✅ ' + result.rows.length + ' open enquiries loaded!');
     };
 
-    var oldScript = document.getElementById('searchScript');
-    if (oldScript) oldScript.remove();
+    var old = document.getElementById('openScript');
+    if (old) old.remove();
     var script = document.createElement('script');
-    script.id = 'searchScript';
-    script.onerror = function() { resultsEl.innerHTML = '<div class="no-results">❌ Search failed — internet check karo</div>'; };
-    script.src = APPS_SCRIPT_URL + '?action=searchEnquiry&q=' + encodeURIComponent(q) + '&callback=handleSearchData';
+    script.id = 'openScript';
+    script.onerror = function() {
+      btn.textContent = '🔄 Open Enquiries Load Karo';
+      btn.disabled = false;
+      showToast('❌ Load failed — internet check karo');
+    };
+    script.src = APPS_SCRIPT_URL + '?action=getOpenEnquiries&callback=handleOpenData';
     document.body.appendChild(script);
+  }
+
+  function selectFromDropdown(idx) {
+    if (idx === '') return;
+    const row = openEnquiriesData[parseInt(idx)];
+    if (row) selectEnquiry(row);
   }
 
   // ── SELECT ENQUIRY ──
