@@ -252,11 +252,10 @@
     <div class="search-box">
       <div class="card-label">Open Enquiries — Select to Update</div>
       <div class="form-group">
-        <select id="openEnquiryDropdown" onchange="selectFromDropdown(this.value)" style="padding:12px 14px;font-size:14px;border:1.5px solid var(--border);border-radius:8px;background:var(--surface2);color:var(--text);font-family:'IBM Plex Sans',sans-serif;width:100%;outline:none;">
-          <option value="">-- Pehle load karo --</option>
+        <select id="openEnquiryDropdown" onchange="selectFromDropdown(this.value)" onclick="loadOpenEnquiries()" style="padding:12px 14px;font-size:14px;border:1.5px solid var(--border);border-radius:8px;background:var(--surface2);color:var(--text);font-family:'IBM Plex Sans',sans-serif;width:100%;outline:none;">
+          <option value="">-- Select karo --</option>
         </select>
       </div>
-      <button class="btn-search" onclick="loadOpenEnquiries()" style="margin-top:10px;width:100%">🔄 Open Enquiries Load Karo</button>
     </div>
     <div id="searchResults"></div>
   </div>
@@ -481,43 +480,28 @@
       document.getElementById('formScreen').style.display = 'block';
     } else {
       document.getElementById('updateSearchScreen').style.display = 'block';
-      document.getElementById('searchResults').innerHTML = '';
-      document.getElementById('searchQuery').value = '';
+      loadOpenEnquiries();
     }
   }
 
   // ── LOAD OPEN ENQUIRIES ──
   let openEnquiriesData = [];
 
+  let loadingOpen = false;
   function loadOpenEnquiries() {
-    const btn = document.querySelector('#updateSearchScreen .btn-search');
-    btn.textContent = '⏳ Loading...';
-    btn.disabled = true;
+    if (loadingOpen) return;
+    loadingOpen = true;
 
-    // Use fetch with no-cors fallback via JSONP
     fetch(APPS_SCRIPT_URL + '?action=getOpenEnquiries')
       .then(r => r.json())
-      .then(result => {
-        btn.textContent = '🔄 Open Enquiries Load Karo';
-        btn.disabled = false;
-        fillOpenDropdown(result);
-      })
+      .then(result => { loadingOpen = false; fillOpenDropdown(result); })
       .catch(() => {
-        // Fallback to JSONP
-        window.handleOpenData = function(result) {
-          btn.textContent = '🔄 Open Enquiries Load Karo';
-          btn.disabled = false;
-          fillOpenDropdown(result);
-        };
+        window.handleOpenData = function(result) { loadingOpen = false; fillOpenDropdown(result); };
         var old = document.getElementById('openScript');
         if (old) old.remove();
         var script = document.createElement('script');
         script.id = 'openScript';
-        script.onerror = function() {
-          btn.textContent = '🔄 Open Enquiries Load Karo';
-          btn.disabled = false;
-          showToast('❌ Load failed — internet check karo');
-        };
+        script.onerror = function() { loadingOpen = false; showToast('❌ Load failed'); };
         script.src = APPS_SCRIPT_URL + '?action=getOpenEnquiries&callback=handleOpenData';
         document.body.appendChild(script);
       });
