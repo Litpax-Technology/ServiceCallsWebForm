@@ -62,6 +62,47 @@
   .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--primary);color:white;padding:12px 24px;border-radius:30px;font-size:13px;font-weight:500;z-index:999;opacity:0;transition:opacity 0.3s;pointer-events:none;}
   .toast.show{opacity:1;}
 
+
+  /* ── TABS ── */
+  .tabs{display:flex;gap:0;margin-bottom:20px;background:white;border-radius:var(--radius);border:1px solid var(--border);overflow:hidden;box-shadow:var(--shadow);}
+  .tab-btn{flex:1;padding:13px;font-size:13px;font-weight:600;border:none;background:transparent;cursor:pointer;color:var(--text2);font-family:'IBM Plex Sans',sans-serif;transition:all 0.2s;border-bottom:2px solid transparent;}
+  .tab-btn.active{background:var(--blue);color:white;border-bottom-color:var(--blue);}
+  .tab-btn:not(.active):hover{background:var(--surface3);}
+
+  /* ── SEARCH BOX ── */
+  .search-box{background:white;border-radius:var(--radius);border:1px solid var(--border);padding:20px;margin-bottom:14px;box-shadow:var(--shadow);}
+  .search-row{display:flex;gap:10px;}
+  .search-input{flex:1;padding:10px 14px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;font-family:'IBM Plex Sans',sans-serif;color:var(--text);background:var(--surface2);outline:none;transition:all 0.2s;}
+  .search-input:focus{border-color:var(--blue);background:white;box-shadow:0 0 0 3px rgba(26,95,216,0.08);}
+  .btn-search{padding:10px 22px;border-radius:8px;border:none;background:var(--blue);color:white;font-size:14px;font-weight:600;cursor:pointer;font-family:'IBM Plex Sans',sans-serif;white-space:nowrap;}
+  .btn-search:hover{background:#1550c0;}
+
+  /* ── SEARCH RESULTS ── */
+  .result-card{background:white;border-radius:var(--radius);border:1.5px solid var(--border);padding:16px 18px;margin-bottom:10px;cursor:pointer;transition:all 0.2s;box-shadow:var(--shadow);}
+  .result-card:hover{border-color:var(--blue);box-shadow:0 4px 16px rgba(26,95,216,0.1);}
+  .result-card.selected{border-color:var(--blue);background:#f0f5ff;}
+  .rc-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;}
+  .rc-name{font-size:15px;font-weight:600;color:var(--text);}
+  .rc-sr{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--blue);background:#e8f0fe;padding:3px 10px;border-radius:20px;}
+  .rc-meta{display:flex;flex-wrap:wrap;gap:8px;}
+  .rc-chip{font-size:11px;color:var(--text2);background:var(--surface3);padding:3px 10px;border-radius:6px;}
+  .rc-status-open{font-size:11px;font-weight:700;color:#c0392b;background:#fff0ec;border:1px solid #f5c6c6;padding:3px 10px;border-radius:6px;}
+  .rc-status-closed{font-size:11px;font-weight:700;color:#00856e;background:#e8f8f4;border:1px solid #b2e8d8;padding:3px 10px;border-radius:6px;}
+  .no-results{text-align:center;padding:32px;color:var(--text3);font-size:14px;}
+
+  /* ── UPDATE FORM ── */
+  .update-header{background:linear-gradient(135deg,#0d1526,#1a3a6b);border-radius:var(--radius) var(--radius) 0 0;padding:16px 20px;margin:-20px -20px 18px;}
+  .update-header-title{font-size:14px;font-weight:700;color:white;margin-bottom:2px;}
+  .update-header-sub{font-size:11px;color:rgba(255,255,255,0.55);}
+  .readonly-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;}
+  .ro-item{background:var(--surface3);border-radius:8px;padding:10px 12px;}
+  .ro-label{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px;}
+  .ro-value{font-size:13px;font-weight:500;color:var(--text);}
+  .btn-back{padding:10px 20px;border-radius:8px;border:1.5px solid var(--border);background:white;color:var(--text2);font-size:13px;font-weight:600;cursor:pointer;font-family:'IBM Plex Sans',sans-serif;}
+  .btn-update{padding:10px 28px;border-radius:8px;border:none;background:var(--success);color:white;font-size:14px;font-weight:600;cursor:pointer;font-family:'IBM Plex Sans',sans-serif;}
+  .btn-update:hover{background:#00a07a;}
+  .btn-update:disabled{opacity:0.6;cursor:not-allowed;}
+  .update-btns{display:flex;justify-content:space-between;align-items:center;margin-top:20px;}
   .page-title{font-size:20px;font-weight:600;color:var(--text);margin-bottom:4px;}
   .page-sub{font-size:13px;color:var(--text2);margin-bottom:20px;}
 </style>
@@ -80,6 +121,12 @@
 </div>
 
 <div class="main">
+
+  <!-- TABS -->
+  <div class="tabs">
+    <button class="tab-btn active" id="tab-new" onclick="switchTab('new')">📋 New Enquiry</button>
+    <button class="tab-btn" id="tab-update" onclick="switchTab('update')">✏️ Update Enquiry</button>
+  </div>
 
   <!-- FORM -->
   <div id="formScreen">
@@ -197,6 +244,91 @@
     </div>
   </div>
 
+  <!-- UPDATE SEARCH SCREEN -->
+  <div id="updateSearchScreen" style="display:none">
+    <div class="page-title">✏️ Update Enquiry</div>
+    <div class="page-sub">Sr No ya Customer Name se search karo</div>
+
+    <div class="search-box">
+      <div class="card-label">Search Enquiry</div>
+      <div class="search-row">
+        <input class="search-input" type="text" id="searchQuery" placeholder="Sr No (e.g. 5) ya Customer Name likho..." onkeypress="if(event.key==='Enter')searchEnquiry()">
+        <button class="btn-search" onclick="searchEnquiry()">🔍 Search</button>
+      </div>
+    </div>
+    <div id="searchResults"></div>
+  </div>
+
+  <!-- UPDATE FORM SCREEN -->
+  <div id="updateFormScreen" style="display:none">
+    <div class="page-title">✏️ Enquiry Update</div>
+    <div class="page-sub">Selected enquiry ki details update karo</div>
+
+    <div class="card">
+      <div class="update-header">
+        <div class="update-header-title" id="uf-title">Enquiry Details</div>
+        <div class="update-header-sub" id="uf-sub">Read-only info</div>
+      </div>
+
+      <!-- Read-only info -->
+      <div class="readonly-grid" id="ro-grid"></div>
+
+      <!-- Editable fields -->
+      <div class="card-label">Update Fields</div>
+
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Enquiry Closed <span class="req">*</span></label>
+          <div class="tag-group">
+            <div class="tag-opt yes" onclick="selectTag(this,'uEnquiryClosed','Yes')">✅ Yes</div>
+            <div class="tag-opt no" onclick="selectTag(this,'uEnquiryClosed','No')">❌ No</div>
+          </div>
+          <input type="hidden" id="uEnquiryClosed" value="">
+        </div>
+        <div class="form-group">
+          <label>Response</label>
+          <select id="uResponse">
+            <option value="">-- Select --</option>
+            <option>Voltage Issue</option>
+            <option>Average Issue</option>
+            <option>Charger Issue</option>
+            <option>Connectivity / App Issue</option>
+            <option>Cell Issue</option>
+            <option>BMS Issue</option>
+            <option>Parameter / Calibration Issue</option>
+            <option>Hardware Issue (Wire / Connector)</option>
+            <option>Inverter Issue</option>
+            <option>General Inquiry</option>
+            <option>Dispatch / Tracking</option>
+            <option>Internal / Handover</option>
+            <option>Battery Issue</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div class="form-group full">
+          <label>Remarks (add / update)</label>
+          <textarea id="uRemarks" placeholder="Koi update ya note..."></textarea>
+        </div>
+      </div>
+
+      <div class="update-btns">
+        <button class="btn-back" onclick="backToSearch()">← Wapas</button>
+        <button class="btn-update" id="updateBtn" onclick="submitUpdate()">✅ Update Karo</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- UPDATE SUCCESS -->
+  <div id="updateSuccessScreen" style="display:none;text-align:center;padding:60px 20px">
+    <div class="success-icon" style="background:#e8f8f4">✅</div>
+    <h2 style="font-size:22px;font-weight:600;margin-bottom:8px">Updated!</h2>
+    <p style="font-size:14px;color:var(--text2);margin-bottom:20px">Enquiry successfully update ho gayi</p>
+    <div class="big-id" id="updateSrNoDisplay"></div>
+    <br>
+    <button class="btn-new" onclick="switchTab('update')" style="margin-right:10px">🔍 Aur Search Karo</button>
+    <button class="btn-new" onclick="switchTab('new')">📋 Nayi Entry</button>
+  </div>
+
   <!-- SUCCESS -->
   <div class="success-screen" id="successScreen">
     <div class="success-icon">📋</div>
@@ -212,7 +344,7 @@
 <div class="toast" id="toast"></div>
 
 <script>
-  const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyvx_SWQyCWFdRVFm1Hdam7REmuZfJ_LfiE_aUGzH6tl23NpFY_3m6jLKP0JW3Vg583/exec';
+  const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwQcdrsaitJ-Id2wAXCPOnwuqVUS4jybkFVq2g9V0EkiuDZzyh1bbTTQHEqPIJMzkrN/exec';
 
   let nextSrNo = 1;
 
@@ -332,6 +464,138 @@
     t.textContent = msg;
     t.classList.add('show');
     setTimeout(() => t.classList.remove('show'), 3000);
+  }
+
+  // ── TABS ──
+  function switchTab(tab) {
+    document.getElementById('tab-new').classList.toggle('active', tab === 'new');
+    document.getElementById('tab-update').classList.toggle('active', tab === 'update');
+
+    // Hide all screens
+    ['formScreen','updateSearchScreen','updateFormScreen','updateSuccessScreen','successScreen']
+      .forEach(id => document.getElementById(id).style.display = 'none');
+
+    if (tab === 'new') {
+      document.getElementById('formScreen').style.display = 'block';
+    } else {
+      document.getElementById('updateSearchScreen').style.display = 'block';
+      document.getElementById('searchResults').innerHTML = '';
+      document.getElementById('searchQuery').value = '';
+    }
+  }
+
+  // ── SEARCH ──
+  function searchEnquiry() {
+    const q = document.getElementById('searchQuery').value.trim();
+    if (!q) { showToast('⚠️ Search query likho'); return; }
+
+    const resultsEl = document.getElementById('searchResults');
+    resultsEl.innerHTML = '<div class="no-results">🔍 Searching...</div>';
+
+    window.handleSearchData = function(result) {
+      if (!result.ok || !result.rows || result.rows.length === 0) {
+        resultsEl.innerHTML = '<div class="no-results">❌ Koi entry nahi mili — Sr No ya naam check karo</div>';
+        return;
+      }
+      resultsEl.innerHTML = result.rows.map(row => `
+        <div class="result-card" onclick="selectEnquiry(${JSON.stringify(row).replace(/"/g,'&quot;')})">
+          <div class="rc-top">
+            <div class="rc-name">${row.customerName}</div>
+            <div class="rc-sr">Sr No. ${row.srNo}</div>
+          </div>
+          <div class="rc-meta">
+            <span class="rc-chip">📅 ${row.date}</span>
+            <span class="rc-chip">📱 ${row.contact}</span>
+            <span class="rc-chip">🏷️ ${row.enquiryAbout}</span>
+            <span class="${row.enquiryClosed === 'Yes' ? 'rc-status-closed' : 'rc-status-open'}">
+              ${row.enquiryClosed === 'Yes' ? '✅ Closed' : '⏳ Open'}
+            </span>
+          </div>
+        </div>`).join('');
+    };
+
+    var oldScript = document.getElementById('searchScript');
+    if (oldScript) oldScript.remove();
+    var script = document.createElement('script');
+    script.id = 'searchScript';
+    script.onerror = function() { resultsEl.innerHTML = '<div class="no-results">❌ Search failed — internet check karo</div>'; };
+    script.src = APPS_SCRIPT_URL + '?action=searchEnquiry&q=' + encodeURIComponent(q) + '&callback=handleSearchData';
+    document.body.appendChild(script);
+  }
+
+  // ── SELECT ENQUIRY ──
+  let selectedRow = null;
+  function selectEnquiry(row) {
+    selectedRow = row;
+
+    document.getElementById('uf-title').textContent = row.customerName + ' — Sr No. ' + row.srNo;
+    document.getElementById('uf-sub').textContent = row.date + ' · ' + row.enquiryAbout;
+
+    document.getElementById('ro-grid').innerHTML = `
+      <div class="ro-item"><div class="ro-label">Sr No</div><div class="ro-value">${row.srNo}</div></div>
+      <div class="ro-item"><div class="ro-label">Date</div><div class="ro-value">${row.date}</div></div>
+      <div class="ro-item"><div class="ro-label">Customer</div><div class="ro-value">${row.customerName}</div></div>
+      <div class="ro-item"><div class="ro-label">Contact</div><div class="ro-value">${row.contact}</div></div>
+      <div class="ro-item"><div class="ro-label">OEM</div><div class="ro-value">${row.oems}</div></div>
+      <div class="ro-item"><div class="ro-label">Enquiry About</div><div class="ro-value">${row.enquiryAbout}</div></div>`;
+
+    // Pre-fill current values
+    document.getElementById('uEnquiryClosed').value = row.enquiryClosed || '';
+    document.getElementById('uResponse').value = row.response || '';
+    document.getElementById('uRemarks').value = row.remarks || '';
+
+    // Pre-select tag
+    document.querySelectorAll('#updateFormScreen .tag-opt').forEach(o => o.classList.remove('selected'));
+    if (row.enquiryClosed === 'Yes') {
+      document.querySelector('#updateFormScreen .tag-opt.yes').classList.add('selected');
+    } else if (row.enquiryClosed === 'No') {
+      document.querySelector('#updateFormScreen .tag-opt.no').classList.add('selected');
+    }
+
+    // Show update form
+    document.getElementById('updateSearchScreen').style.display = 'none';
+    document.getElementById('updateFormScreen').style.display = 'block';
+    window.scrollTo(0, 0);
+  }
+
+  // ── BACK TO SEARCH ──
+  function backToSearch() {
+    document.getElementById('updateFormScreen').style.display = 'none';
+    document.getElementById('updateSearchScreen').style.display = 'block';
+  }
+
+  // ── SUBMIT UPDATE ──
+  function submitUpdate() {
+    if (!selectedRow) return;
+    const enquiryClosed = document.getElementById('uEnquiryClosed').value;
+    if (!enquiryClosed) { showToast('⚠️ Enquiry Closed select karo'); return; }
+
+    const btn = document.getElementById('updateBtn');
+    btn.disabled = true; btn.textContent = '⏳ Updating...';
+
+    const data = {
+      action: 'updateEnquiry',
+      srNo: selectedRow.srNo,
+      enquiryClosed: enquiryClosed,
+      response: document.getElementById('uResponse').value,
+      remarks: document.getElementById('uRemarks').value
+    };
+
+    fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(data)
+    }).then(() => {
+      document.getElementById('updateFormScreen').style.display = 'none';
+      document.getElementById('updateSuccessScreen').style.display = 'block';
+      document.getElementById('updateSrNoDisplay').textContent = 'Sr. No. — ' + selectedRow.srNo + ' Updated ✅';
+      btn.disabled = false; btn.textContent = '✅ Update Karo';
+      window.scrollTo(0, 0);
+    }).catch(() => {
+      showToast('❌ Update failed');
+      btn.disabled = false; btn.textContent = '✅ Update Karo';
+    });
   }
 </script>
 </body>
