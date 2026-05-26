@@ -494,37 +494,48 @@
     btn.textContent = '⏳ Loading...';
     btn.disabled = true;
 
-    window.handleOpenData = function(result) {
-      btn.textContent = '🔄 Open Enquiries Load Karo';
-      btn.disabled = false;
+    // Use fetch with no-cors fallback via JSONP
+    fetch(APPS_SCRIPT_URL + '?action=getOpenEnquiries')
+      .then(r => r.json())
+      .then(result => {
+        btn.textContent = '🔄 Open Enquiries Load Karo';
+        btn.disabled = false;
+        fillOpenDropdown(result);
+      })
+      .catch(() => {
+        // Fallback to JSONP
+        window.handleOpenData = function(result) {
+          btn.textContent = '🔄 Open Enquiries Load Karo';
+          btn.disabled = false;
+          fillOpenDropdown(result);
+        };
+        var old = document.getElementById('openScript');
+        if (old) old.remove();
+        var script = document.createElement('script');
+        script.id = 'openScript';
+        script.onerror = function() {
+          btn.textContent = '🔄 Open Enquiries Load Karo';
+          btn.disabled = false;
+          showToast('❌ Load failed — internet check karo');
+        };
+        script.src = APPS_SCRIPT_URL + '?action=getOpenEnquiries&callback=handleOpenData';
+        document.body.appendChild(script);
+      });
+  }
 
-      if (!result.ok || !result.rows || result.rows.length === 0) {
-        showToast('✅ Koi open enquiry nahi hai!');
-        document.getElementById('openEnquiryDropdown').innerHTML = '<option value="">-- Koi open enquiry nahi --</option>';
-        return;
-      }
-
-      openEnquiriesData = result.rows;
-      const dropdown = document.getElementById('openEnquiryDropdown');
-      dropdown.innerHTML = '<option value="">-- Select Open Enquiry --</option>' +
-        result.rows.map((row, i) =>
-          `<option value="${i}">Sr.${row.srNo} — ${row.customerName} — ${row.enquiryAbout} (${row.date})</option>`
-        ).join('');
-
-      showToast('✅ ' + result.rows.length + ' open enquiries loaded!');
-    };
-
-    var old = document.getElementById('openScript');
-    if (old) old.remove();
-    var script = document.createElement('script');
-    script.id = 'openScript';
-    script.onerror = function() {
-      btn.textContent = '🔄 Open Enquiries Load Karo';
-      btn.disabled = false;
-      showToast('❌ Load failed — internet check karo');
-    };
-    script.src = APPS_SCRIPT_URL + '?action=getOpenEnquiries&callback=handleOpenData';
-    document.body.appendChild(script);
+  function fillOpenDropdown(result) {
+    if (!result.ok || !result.rows || result.rows.length === 0) {
+      showToast('✅ Koi open enquiry nahi hai!');
+      document.getElementById('openEnquiryDropdown').innerHTML = '<option value="">-- Koi open enquiry nahi --</option>';
+      return;
+    }
+    openEnquiriesData = result.rows;
+    const dropdown = document.getElementById('openEnquiryDropdown');
+    dropdown.innerHTML = '<option value="">-- Select karo (' + result.rows.length + ' open) --</option>' +
+      result.rows.map((row, i) =>
+        `<option value="${i}">Sr.${row.srNo} — ${row.customerName}</option>`
+      ).join('');
+    showToast('✅ ' + result.rows.length + ' open enquiries loaded!');
   }
 
   function selectFromDropdown(idx) {
