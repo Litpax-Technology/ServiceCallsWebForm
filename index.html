@@ -345,7 +345,7 @@
 <div class="toast" id="toast"></div>
 
 <script>
-  const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbweGIN78JJP-yRbm4Jn6Jl7sz5AvvXnHogv95HIj9cAEkCdgNGZwM7msn_GVOjSVmPv/exec';
+  const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx8L7HZ3zU9i4mXDefeqSwsTw95UxOO0I-BTbZKGSzihU7tlDhPIurM_7QBNvY-fI7w/exec';
 
   let nextSrNo = 1;
 
@@ -492,19 +492,21 @@
     if (loadingOpen) return;
     loadingOpen = true;
 
-    fetch(APPS_SCRIPT_URL + '?action=getOpenEnquiries')
-      .then(r => r.json())
-      .then(result => { loadingOpen = false; fillOpenDropdown(result); })
-      .catch(() => {
-        window.handleOpenData = function(result) { loadingOpen = false; fillOpenDropdown(result); };
-        var old = document.getElementById('openScript');
-        if (old) old.remove();
-        var script = document.createElement('script');
-        script.id = 'openScript';
-        script.onerror = function() { loadingOpen = false; showToast('❌ Load failed'); };
-        script.src = APPS_SCRIPT_URL + '?action=getOpenEnquiries&callback=handleOpenData';
-        document.body.appendChild(script);
-      });
+    // JSONP — most reliable with Google Apps Script
+    window.handleOpenData = function(result) {
+      loadingOpen = false;
+      fillOpenDropdown(result);
+    };
+    var old = document.getElementById('openScript');
+    if (old) old.remove();
+    var script = document.createElement('script');
+    script.id = 'openScript';
+    script.onerror = function() {
+      loadingOpen = false;
+      showToast('❌ Network error');
+    };
+    script.src = APPS_SCRIPT_URL + '?action=getOpenEnquiries&callback=handleOpenData&t=' + Date.now();
+    document.body.appendChild(script);
   }
 
   function fillOpenDropdown(result) {
