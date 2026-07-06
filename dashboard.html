@@ -5,13 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Litpax — Enquiry Dashboard</title>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
-  :root{--primary:#0d1526;--blue:#1a5fd8;--surface2:#f7f8fc;--surface3:#eef0f8;--border:#dde1f0;--text:#111827;--text2:#5a6080;--text3:#8890b0;--success:#00b894;--warning:#f9a825;--danger:#e17055;--accent:#e94560;--radius:10px;--shadow:0 2px 16px rgba(13,21,38,0.08);}
+  :root{--primary:#0d1526;--blue:#1a5fd8;--surface2:#f7f8fc;--surface3:#eef0f8;--border:#dde1f0;--text:#111827;--text2:#5a6080;--text3:#8890b0;--success:#00b894;--warning:#f9a825;--danger:#e17055;--accent:#e94560;--purple:#7c5cff;--radius:10px;--shadow:0 2px 16px rgba(13,21,38,0.08);}
   *{box-sizing:border-box;margin:0;padding:0;}
   body{font-family:'IBM Plex Sans',sans-serif;background:var(--surface2);color:var(--text);min-height:100vh;padding-bottom:60px;}
 
   .header{background:var(--primary);color:white;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(13,21,38,0.22);}
-  .header-inner{max-width:1100px;margin:0 auto;padding:14px 20px;display:flex;align-items:center;gap:14px;}
+  .header-inner{max-width:1200px;margin:0 auto;padding:14px 20px;display:flex;align-items:center;gap:14px;}
   .logo{background:var(--blue);color:white;font-size:12px;font-weight:700;padding:5px 10px;border-radius:6px;letter-spacing:1px;font-family:'IBM Plex Mono',monospace;}
   .header-text h1{font-size:15px;font-weight:600;color:white;}
   .header-text p{font-size:11px;color:rgba(255,255,255,0.5);margin-top:1px;}
@@ -20,12 +21,10 @@
   .btn-refresh{padding:8px 16px;border-radius:8px;border:1px solid rgba(255,255,255,0.25);background:rgba(255,255,255,0.08);color:white;font-size:12px;font-weight:600;cursor:pointer;font-family:'IBM Plex Sans',sans-serif;transition:all 0.2s;}
   .btn-refresh:hover{background:rgba(255,255,255,0.16);}
 
-  .main{max-width:1100px;margin:0 auto;padding:20px;}
-
+  .main{max-width:1200px;margin:0 auto;padding:20px;}
   .page-title{font-size:20px;font-weight:600;color:var(--text);margin-bottom:4px;}
   .page-sub{font-size:13px;color:var(--text2);margin-bottom:20px;}
 
-  /* ── LOADING ── */
   .loading-box{text-align:center;padding:80px 20px;color:var(--text3);font-size:14px;}
   .spinner{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--blue);border-radius:50%;margin:0 auto 16px;animation:spin 0.8s linear infinite;}
   @keyframes spin{to{transform:rotate(360deg)}}
@@ -38,7 +37,7 @@
   .stat-card.open::before{background:var(--danger);}
   .stat-card.closed::before{background:var(--success);}
   .stat-card.today::before{background:var(--warning);}
-  .stat-card.rate::before{background:#7c5cff;}
+  .stat-card.rate::before{background:var(--purple);}
   .stat-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.6px;color:var(--text3);margin-bottom:6px;}
   .stat-value{font-family:'IBM Plex Mono',monospace;font-size:26px;font-weight:700;color:var(--text);line-height:1;}
   .stat-value.open-c{color:#c0392b;}
@@ -57,19 +56,30 @@
   .btn-clear{padding:9px 14px;border-radius:8px;border:1.5px solid var(--border);background:white;color:var(--text2);font-size:12px;font-weight:600;cursor:pointer;font-family:'IBM Plex Sans',sans-serif;transition:all 0.2s;}
   .btn-clear:hover{border-color:var(--danger);color:var(--danger);}
 
-  /* ── BREAKDOWN ── */
-  .breakdown-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px;}
-  @media(max-width:760px){.breakdown-grid{grid-template-columns:1fr;}}
-  .card{background:white;border-radius:var(--radius);border:1px solid var(--border);padding:18px 20px;box-shadow:var(--shadow);}
+  /* ── CHART GRID ── */
+  .charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px;}
+  @media(max-width:760px){.charts-grid{grid-template-columns:1fr;}}
+  .chart-card{background:white;border-radius:var(--radius);border:1px solid var(--border);padding:18px 20px;box-shadow:var(--shadow);}
+  .chart-card.wide{grid-column:1/-1;}
   .card-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.8px;color:var(--text3);margin-bottom:14px;display:flex;align-items:center;gap:6px;}
   .card-label::after{content:'';flex:1;height:1px;background:var(--border);}
-  .bar-row{display:flex;align-items:center;gap:10px;margin-bottom:9px;}
-  .bar-name{width:150px;font-size:12px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex-shrink:0;}
-  .bar-track{flex:1;height:18px;background:var(--surface3);border-radius:5px;overflow:hidden;}
-  .bar-fill{height:100%;background:var(--blue);border-radius:5px;transition:width 0.5s ease;min-width:2px;}
-  .bar-fill.alt{background:#7c5cff;}
-  .bar-count{width:34px;text-align:right;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;color:var(--text);flex-shrink:0;}
-  .empty-mini{font-size:12px;color:var(--text3);padding:10px 0;}
+  .chart-box{position:relative;height:260px;}
+  .chart-box.tall{height:320px;}
+
+  /* ── PERSON CARDS ── */
+  .person-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-bottom:16px;}
+  .person-card{background:white;border-radius:var(--radius);border:1px solid var(--border);padding:16px 18px;box-shadow:var(--shadow);}
+  .person-name{font-size:14px;font-weight:700;color:var(--text);margin-bottom:2px;display:flex;align-items:center;gap:8px;}
+  .person-badge{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--blue);background:#e8f0fe;padding:2px 10px;border-radius:20px;font-weight:600;margin-left:auto;}
+  .person-stats{display:flex;gap:14px;margin:12px 0 10px;}
+  .ps-item{flex:1;}
+  .ps-num{font-family:'IBM Plex Mono',monospace;font-size:20px;font-weight:700;line-height:1;}
+  .ps-num.o{color:#c0392b;}
+  .ps-num.c{color:#00856e;}
+  .ps-lbl{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:var(--text3);margin-top:4px;}
+  .person-bar{height:8px;background:#fff0ec;border-radius:5px;overflow:hidden;}
+  .person-bar-fill{height:100%;background:var(--success);border-radius:5px;transition:width 0.5s ease;}
+  .person-rate{font-size:11px;color:var(--text3);margin-top:6px;font-family:'IBM Plex Mono',monospace;}
 
   /* ── TABLE ── */
   .table-card{background:white;border-radius:var(--radius);border:1px solid var(--border);box-shadow:var(--shadow);overflow:hidden;}
@@ -114,9 +124,8 @@
 <div class="main">
 
   <div class="page-title">📊 Enquiry Overview</div>
-  <div class="page-sub">Sabhi enquiries ka live status ek jagah</div>
+  <div class="page-sub">Sabhi enquiries ka live status — charts & analytics</div>
 
-  <!-- LOADING -->
   <div class="loading-box" id="loadingBox">
     <div class="spinner"></div>
     Data load ho raha hai...
@@ -144,7 +153,7 @@
       <div class="stat-card today">
         <div class="stat-label">Today</div>
         <div class="stat-value" id="stToday">0</div>
-        <div class="stat-sub" id="stTodaySub">Aaj ki entries</div>
+        <div class="stat-sub">Aaj ki entries</div>
       </div>
       <div class="stat-card rate">
         <div class="stat-label">Close Rate</div>
@@ -191,16 +200,53 @@
       </div>
     </div>
 
-    <!-- BREAKDOWNS -->
-    <div class="breakdown-grid">
-      <div class="card">
-        <div class="card-label">Response / Issue Breakdown</div>
-        <div id="responseBars"></div>
+    <!-- PERSON-WISE CARDS -->
+    <div class="card-label" style="margin-bottom:10px">👤 Person-wise Performance</div>
+    <div class="person-grid" id="personGrid"></div>
+
+    <!-- CHARTS -->
+    <div class="charts-grid">
+
+      <div class="chart-card">
+        <div class="card-label">👤 Attended By — Open vs Closed</div>
+        <div class="chart-box"><canvas id="chPerson"></canvas></div>
       </div>
-      <div class="card">
-        <div class="card-label">Enquiry About Breakdown</div>
-        <div id="aboutBars"></div>
+
+      <div class="chart-card">
+        <div class="card-label">🎯 Status — Open vs Closed</div>
+        <div class="chart-box"><canvas id="chStatus"></canvas></div>
       </div>
+
+      <div class="chart-card wide">
+        <div class="card-label">📈 Daily Trend — Last 30 Days</div>
+        <div class="chart-box"><canvas id="chDaily"></canvas></div>
+      </div>
+
+      <div class="chart-card">
+        <div class="card-label">📅 Monthly Trend</div>
+        <div class="chart-box"><canvas id="chMonthly"></canvas></div>
+      </div>
+
+      <div class="chart-card">
+        <div class="card-label">🏭 OEM-wise — Open vs Closed</div>
+        <div class="chart-box"><canvas id="chOem"></canvas></div>
+      </div>
+
+      <div class="chart-card">
+        <div class="card-label">📌 Enquiry About</div>
+        <div class="chart-box"><canvas id="chAbout"></canvas></div>
+      </div>
+
+      <div class="chart-card">
+        <div class="card-label">✅ Close Rate % — Person-wise</div>
+        <div class="chart-box"><canvas id="chRate"></canvas></div>
+      </div>
+
+      <div class="chart-card wide">
+        <div class="card-label">🔧 Response / Issue Breakdown</div>
+        <div class="chart-box tall"><canvas id="chResponse"></canvas></div>
+      </div>
+
     </div>
 
     <!-- TABLE -->
@@ -230,9 +276,22 @@
 <div class="toast" id="toast"></div>
 
 <script>
-  const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx8L7HZ3zU9i4mXDefeqSwsTw95UxOO0I-BTbZKGSzihU7tlDhPIurM_7QBNvY-fI7w/exec';
+  const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzTZU0YyV8wTfaPcUhUj7C041nxgZz2nrVIlJEiVE9adF35-KuwoBczI22DXbLa7B2z/exec';
 
   let allRows = [];
+  let charts = {};
+
+  const C = {
+    blue: '#1a5fd8', blueSoft: 'rgba(26,95,216,0.15)',
+    green: '#00b894', greenSoft: 'rgba(0,184,148,0.7)',
+    red: '#e17055', redSoft: 'rgba(225,112,85,0.75)',
+    purple: '#7c5cff', yellow: '#f9a825', accent: '#e94560',
+    palette: ['#1a5fd8','#7c5cff','#00b894','#f9a825','#e17055','#e94560','#0984e3','#6c5ce7','#00cec9','#fd79a8','#636e72','#a29bfe','#55efc4','#fab1a0']
+  };
+
+  Chart.defaults.font.family = "'IBM Plex Sans', sans-serif";
+  Chart.defaults.font.size = 11;
+  Chart.defaults.color = '#5a6080';
 
   window.onload = function() {
     const now = new Date();
@@ -275,7 +334,7 @@
     document.body.appendChild(script);
   }
 
-  // ── FILTER OPTIONS (data-driven, no hardcoding) ──
+  // ── FILTER OPTIONS (data-driven) ──
   function buildFilterOptions() {
     fillSelect('fAttended', unique(allRows.map(r => r.attendedBy)));
     fillSelect('fOem', unique(allRows.map(r => r.oems)));
@@ -290,7 +349,7 @@
     sel.value = cur;
   }
 
-  // ── DATE PARSE (handles yyyy-mm-dd and dd/mm/yyyy) ──
+  // ── DATE HELPERS ──
   function parseDate(str) {
     if (!str) return null;
     str = String(str).trim();
@@ -307,6 +366,12 @@
     const d = parseDate(str);
     if (!d) return str || '—';
     return d.toLocaleDateString('en-IN', {day:'2-digit', month:'short', year:'2-digit'});
+  }
+  function dayKey(d) {
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+  }
+  function monthKey(d) {
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
   }
 
   // ── APPLY FILTERS + RENDER ──
@@ -333,7 +398,8 @@
     });
 
     renderStats(filtered);
-    renderBars(filtered);
+    renderPersonCards(filtered);
+    renderCharts(filtered);
     renderTable(filtered);
   }
 
@@ -359,29 +425,204 @@
     document.getElementById('stTotalSub').textContent = (allRows.length === total) ? 'All time' : 'Filtered view';
   }
 
-  // ── BAR BREAKDOWNS ──
-  function renderBars(rows) {
-    drawBars('responseBars', countBy(rows, 'response'), false);
-    drawBars('aboutBars', countBy(rows, 'enquiryAbout'), true);
+  // ── PERSON-WISE CARDS (Sukhpal / Kuldeep / jo bhi ho) ──
+  function renderPersonCards(rows) {
+    const persons = unique(rows.map(r => r.attendedBy));
+    const grid = document.getElementById('personGrid');
+    if (!persons.length) { grid.innerHTML = '<div style="font-size:12px;color:var(--text3);padding:10px">Koi data nahi</div>'; return; }
+
+    grid.innerHTML = persons.map(p => {
+      const pRows = rows.filter(r => r.attendedBy === p);
+      const total = pRows.length;
+      const open = pRows.filter(r => r.enquiryClosed === 'No').length;
+      const closed = pRows.filter(r => r.enquiryClosed === 'Yes').length;
+      const rate = total ? Math.round((closed / total) * 100) : 0;
+      return `
+      <div class="person-card">
+        <div class="person-name">👤 ${esc(p)} <span class="person-badge">${total} total</span></div>
+        <div class="person-stats">
+          <div class="ps-item"><div class="ps-num o">${open}</div><div class="ps-lbl">Open</div></div>
+          <div class="ps-item"><div class="ps-num c">${closed}</div><div class="ps-lbl">Closed</div></div>
+          <div class="ps-item"><div class="ps-num">${rate}%</div><div class="ps-lbl">Close Rate</div></div>
+        </div>
+        <div class="person-bar"><div class="person-bar-fill" style="width:${rate}%"></div></div>
+        <div class="person-rate">${closed} / ${total} closed</div>
+      </div>`;
+    }).join('');
   }
-  function countBy(rows, key) {
+
+  // ── GROUP HELPERS ──
+  function groupOpenClosed(rows, key) {
+    const labels = unique(rows.map(r => r[key]));
+    const openData = labels.map(l => rows.filter(r => r[key] === l && r.enquiryClosed === 'No').length);
+    const closedData = labels.map(l => rows.filter(r => r[key] === l && r.enquiryClosed === 'Yes').length);
+    return { labels, openData, closedData };
+  }
+  function countBy(rows, key, limit) {
     const map = {};
     rows.forEach(r => {
       const v = (r[key] || '').trim() || '(Blank)';
       map[v] = (map[v] || 0) + 1;
     });
-    return Object.entries(map).sort((a,b) => b[1]-a[1]).slice(0, 10);
+    let entries = Object.entries(map).sort((a,b) => b[1]-a[1]);
+    if (limit) entries = entries.slice(0, limit);
+    return entries;
   }
-  function drawBars(elId, entries, alt) {
-    const el = document.getElementById(elId);
-    if (!entries.length) { el.innerHTML = '<div class="empty-mini">Koi data nahi</div>'; return; }
-    const max = entries[0][1];
-    el.innerHTML = entries.map(([name, count]) => `
-      <div class="bar-row">
-        <div class="bar-name" title="${esc(name)}">${esc(name)}</div>
-        <div class="bar-track"><div class="bar-fill${alt ? ' alt' : ''}" style="width:${Math.round((count/max)*100)}%"></div></div>
-        <div class="bar-count">${count}</div>
-      </div>`).join('');
+
+  // ── RENDER ALL CHARTS ──
+  function renderCharts(rows) {
+    // 1. Person-wise stacked bar (Open vs Closed)
+    const pg = groupOpenClosed(rows, 'attendedBy');
+    makeChart('chPerson', {
+      type: 'bar',
+      data: {
+        labels: pg.labels,
+        datasets: [
+          { label: 'Open', data: pg.openData, backgroundColor: C.redSoft, borderRadius: 6 },
+          { label: 'Closed', data: pg.closedData, backgroundColor: C.greenSoft, borderRadius: 6 }
+        ]
+      },
+      options: baseOpts({ stacked: false })
+    });
+
+    // 2. Status donut
+    const open = rows.filter(r => r.enquiryClosed === 'No').length;
+    const closed = rows.filter(r => r.enquiryClosed === 'Yes').length;
+    makeChart('chStatus', {
+      type: 'doughnut',
+      data: {
+        labels: ['Open', 'Closed'],
+        datasets: [{ data: [open, closed], backgroundColor: [C.redSoft, C.greenSoft], borderWidth: 2, borderColor: '#fff' }]
+      },
+      options: { responsive: true, maintainAspectRatio: false, cutout: '62%', plugins: { legend: { position: 'bottom' } } }
+    });
+
+    // 3. Daily trend — last 30 days line
+    const today = new Date();
+    const dayLabels = [], dayCounts = [], dayClosed = [];
+    const byDay = {}, byDayClosed = {};
+    rows.forEach(r => {
+      const d = parseDate(r.date);
+      if (!d) return;
+      const k = dayKey(d);
+      byDay[k] = (byDay[k] || 0) + 1;
+      if (r.enquiryClosed === 'Yes') byDayClosed[k] = (byDayClosed[k] || 0) + 1;
+    });
+    for (let i = 29; i >= 0; i--) {
+      const d = new Date(today.getFullYear(), today.getMonth(), today.getDate() - i);
+      const k = dayKey(d);
+      dayLabels.push(d.toLocaleDateString('en-IN', {day:'2-digit', month:'short'}));
+      dayCounts.push(byDay[k] || 0);
+      dayClosed.push(byDayClosed[k] || 0);
+    }
+    makeChart('chDaily', {
+      type: 'line',
+      data: {
+        labels: dayLabels,
+        datasets: [
+          { label: 'Total Enquiries', data: dayCounts, borderColor: C.blue, backgroundColor: C.blueSoft, fill: true, tension: 0.35, pointRadius: 2 },
+          { label: 'Closed', data: dayClosed, borderColor: C.green, backgroundColor: 'transparent', tension: 0.35, pointRadius: 2, borderDash: [5,4] }
+        ]
+      },
+      options: baseOpts({})
+    });
+
+    // 4. Monthly trend
+    const byMonth = {};
+    rows.forEach(r => {
+      const d = parseDate(r.date);
+      if (!d) return;
+      const k = monthKey(d);
+      byMonth[k] = (byMonth[k] || 0) + 1;
+    });
+    const monthKeys = Object.keys(byMonth).sort().slice(-12);
+    makeChart('chMonthly', {
+      type: 'bar',
+      data: {
+        labels: monthKeys.map(k => {
+          const [y, m] = k.split('-');
+          return new Date(y, m-1, 1).toLocaleDateString('en-IN', {month:'short', year:'2-digit'});
+        }),
+        datasets: [{ label: 'Enquiries', data: monthKeys.map(k => byMonth[k]), backgroundColor: C.blue, borderRadius: 6 }]
+      },
+      options: baseOpts({ legend: false })
+    });
+
+    // 5. OEM-wise stacked
+    const og = groupOpenClosed(rows, 'oems');
+    makeChart('chOem', {
+      type: 'bar',
+      data: {
+        labels: og.labels,
+        datasets: [
+          { label: 'Open', data: og.openData, backgroundColor: C.redSoft, borderRadius: 6 },
+          { label: 'Closed', data: og.closedData, backgroundColor: C.greenSoft, borderRadius: 6 }
+        ]
+      },
+      options: baseOpts({ stacked: true })
+    });
+
+    // 6. Enquiry About pie
+    const aboutEntries = countBy(rows, 'enquiryAbout');
+    makeChart('chAbout', {
+      type: 'pie',
+      data: {
+        labels: aboutEntries.map(e => e[0]),
+        datasets: [{ data: aboutEntries.map(e => e[1]), backgroundColor: C.palette, borderWidth: 2, borderColor: '#fff' }]
+      },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+    });
+
+    // 7. Close rate % per person
+    const rateLabels = pg.labels;
+    const rateData = rateLabels.map((l, i) => {
+      const t = pg.openData[i] + pg.closedData[i];
+      return t ? Math.round((pg.closedData[i] / t) * 100) : 0;
+    });
+    makeChart('chRate', {
+      type: 'bar',
+      data: {
+        labels: rateLabels,
+        datasets: [{ label: 'Close Rate %', data: rateData, backgroundColor: C.purple, borderRadius: 6 }]
+      },
+      options: baseOpts({ legend: false, max100: true })
+    });
+
+    // 8. Response/Issue horizontal bar
+    const respEntries = countBy(rows, 'response', 14);
+    makeChart('chResponse', {
+      type: 'bar',
+      data: {
+        labels: respEntries.map(e => e[0]),
+        datasets: [{ label: 'Count', data: respEntries.map(e => e[1]), backgroundColor: C.palette, borderRadius: 6 }]
+      },
+      options: Object.assign(baseOpts({ legend: false }), { indexAxis: 'y' })
+    });
+  }
+
+  function baseOpts(cfg) {
+    return {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: cfg.legend === false ? { display: false } : { position: 'bottom' }
+      },
+      scales: {
+        x: { stacked: !!cfg.stacked, grid: { display: false } },
+        y: {
+          stacked: !!cfg.stacked,
+          beginAtZero: true,
+          max: cfg.max100 ? 100 : undefined,
+          ticks: { precision: 0 },
+          grid: { color: '#eef0f8' }
+        }
+      }
+    };
+  }
+
+  function makeChart(id, config) {
+    if (charts[id]) charts[id].destroy();
+    charts[id] = new Chart(document.getElementById(id), config);
   }
 
   // ── TABLE ──
@@ -390,7 +631,6 @@
     document.getElementById('tableCount').textContent = rows.length + ' records';
     document.getElementById('noResults').style.display = rows.length ? 'none' : 'block';
 
-    // Latest first (by Sr No)
     const sorted = [...rows].sort((a,b) => (parseInt(b.srNo)||0) - (parseInt(a.srNo)||0));
 
     body.innerHTML = sorted.map(r => `
